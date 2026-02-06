@@ -9,33 +9,9 @@ import connectToDatabase from "./database/mongodb.js";
 import cookieParser from "cookie-parser";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import arcjetMiddleware from "./middlewares/arcjet.middleware.js";
-import cors from "cors"
 
 const app = express();
 
-
-const allowedOrigins = [
-    "http://localhost:5173",      // local dev
-    "https://myfrontend.com"      // production frontend
-]
-
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Allow non-browser tools (Postman, curl)
-            if (!origin) return callback(null, true)
-
-            if (allowedOrigins.includes(origin)) {
-                callback(null, true)
-            } else {
-                callback(new Error("Not allowed by CORS"))
-            }
-        },
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-        credentials: true
-    })
-)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
