@@ -18,7 +18,7 @@ const subscriptionSchema = new mongoose.Schema({
     currency: {
         type: String,
         enum: ['USD', 'EUR', 'DOP'],
-        default: 'USD',
+        //default: 'USD',
         required: [true, 'Subscription Currency is required'],
 
     },
@@ -26,12 +26,13 @@ const subscriptionSchema = new mongoose.Schema({
     frequency: {
         type: String,
         enum: ['daily', 'weekly', 'monthly', 'yearly'],
+        required: [true, 'Subscription Frequency is required'],
     },
 
     category: {
         type: String,
         enum: ['sports', 'news', 'entertainment', 'lifestyle', 'technology', 'finance', 'politics', 'other'],
-        required: [true, 'Subscription Currency is required'],
+        required: [true, 'Subscription Category is required'],
 
     },
 

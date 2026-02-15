@@ -1,10 +1,9 @@
 import {Router} from "express";
-import {signUp, signIn, signOut} from "../controllers/auth.controller.js";
+import {signIn, signOut} from "../controllers/auth.controller.js";
 
-const authRouter = Router();
+const sessionRouter = Router();
 
-authRouter.post("/sign-up", signUp);
-authRouter.post("/sign-in", signIn);
-authRouter.post("/sign-out",signOut);
+sessionRouter.post("/", signIn);
+sessionRouter.delete("/current", signOut);
 
-export default authRouter;
+export default sessionRouter;

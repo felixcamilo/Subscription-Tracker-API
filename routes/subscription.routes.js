@@ -1,11 +1,10 @@
 import {Router} from "express";
 import authorize from "../middlewares/auth.middleware.js";
 import {
-    createSubscription,
-    deleteUserAllSubscriptions, getAllSubscriptions,
-    getUserAllSubscriptions, updateSubscription, deleteSubscription, getSubscription, deleteAllSubscriptions
-
+    createSubscription, getAllSubscriptions,
+    updateSubscription, deleteSubscription, getSubscription
 } from "../controllers/subscription.controller.js";
+import {sendReminders} from "../controllers/workflow.controller.js";
 
 const subscriptionRouter  = new Router();
 
@@ -15,18 +14,10 @@ subscriptionRouter.post("/", authorize, createSubscription);
 
 subscriptionRouter.get("/:id", authorize, getSubscription);
 
-subscriptionRouter.put("/:id", authorize, updateSubscription);
-
-subscriptionRouter.delete("/", authorize, deleteAllSubscriptions);
+subscriptionRouter.patch("/:id", authorize, updateSubscription);
 
 subscriptionRouter.delete("/:id", authorize, deleteSubscription);
 
-subscriptionRouter.delete("/user/:id", authorize, deleteUserAllSubscriptions);
-
-subscriptionRouter.get("/user/:id", authorize, getUserAllSubscriptions);
-
-subscriptionRouter.put("/:id/cancel");
-
-subscriptionRouter.get("/upcoming/renewals");
+subscriptionRouter.post("/:id/reminders", authorize, sendReminders)
 
 export default subscriptionRouter;

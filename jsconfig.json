@@ -1,0 +1,28 @@
+﻿{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "checkJs": false,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "."
+  },
+  "exclude": [
+    "node_modules",
+    "**/node_modules/*"
+  ],
+  "include": [
+    "app.js",
+    "config/**/*.js",
+    "controllers/**/*.js",
+    "database/**/*.js",
+    "middlewares/**/*.js",
+    "models/**/*.js",
+    "permissions/**/*.js",
+    "routes/**/*.js",
+    "utils/**/*.js"
+  ],
+
+  "editor.suggestOnTriggerCharacters": true,
+  "javascript.suggest.enabled": true
+}

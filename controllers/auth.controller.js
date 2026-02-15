@@ -6,57 +6,6 @@ import {JWT_EXPIRES_IN, JWT_SECRET} from "../config/env.js";
 
 // What is a req body? req.body is an object containing data coming from the client (Post RequestS)
 
-export const signUp = async (req, res, next) => {
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try{
-        // Logic to create a new user
-
-        const {name, email, password, role} = req.body;
-
-        // Check if the user already exists
-
-        const existingUser = await User.findOne({ email });
-
-        if(existingUser){
-            const error = new Error("User already exists");
-            error.statusCode = 409;
-            throw error;
-        }
-
-        // hash password
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUsers = await User.create([{name, email, password: hashedPassword, role}], {session})
-
-        const token = jwt.sign({userId: newUsers[0]._id}, JWT_SECRET, {expiresIn: JWT_EXPIRES_IN} );
-
-        await session.commitTransaction();
-
-        await session.endSession();
-
-        res.status(201).json(
-            {
-                 success: true,
-                 message: "User signed up successfully",
-                 data: {
-                    token,
-                    user: newUsers[0],
-                 }
-            }
-        );
-    }
-    catch(error){
-
-       await session.abortTransaction();
-       await session.endSession();
-       next(error);
-    }
-}
 
 export const signIn = async (req, res, next) => {
 
