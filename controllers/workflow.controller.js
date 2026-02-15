@@ -11,7 +11,12 @@ const REMINDERS = [7, 5, 3, 1]
 
 export const sendReminders = serve(async (context) => {
 
-    const {subscriptionId} = context.requestPayload;
+    const subscriptionId = getSubscriptionId(context);
+
+    if (!subscriptionId) {
+        console.log("Missing subscription id. Stopping workflow...");
+        return;
+    }
 
     const subscription = await fetchSubscription(context, subscriptionId);
 
@@ -43,6 +48,20 @@ export const sendReminders = serve(async (context) => {
 
 
 })
+
+const getSubscriptionId = (context) => {
+    if (context.requestPayload && typeof context.requestPayload === "object" && context.requestPayload.subscriptionId) {
+        return context.requestPayload.subscriptionId;
+    }
+
+    try {
+        const pathname = new URL(context.url).pathname;
+        const match = pathname.match(/\/subscriptions\/([^/]+)\/reminder-jobs(?:\/run)?\/?$/);
+        return match ? match[1] : null;
+    } catch (error) {
+        return null;
+    }
+}
 
 const fetchSubscription = async (context, subscriptionId) => {
 

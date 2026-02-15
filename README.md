@@ -7,7 +7,7 @@ Simple backend API for managing user subscriptions and sending renewal reminders
 - JWT authentication (`/api/v1/sessions`)
 - User management (`/api/v1/users`)
 - Subscription CRUD (`/api/v1/subscriptions`)
-- Reminder workflow trigger with Upstash (`/api/v1/subscriptions/:id/reminders`)
+- Reminder workflow jobs with Upstash (`/api/v1/subscriptions/:id/reminder-jobs`)
 - Arcjet protection middleware (rate limit, bot detection, shield)
 - Swagger UI and OpenAPI spec
 
@@ -111,7 +111,7 @@ Get a token from:
 ### Sessions
 
 - `POST /api/v1/sessions`
-- `DELETE /api/v1/sessions/current` (route exists, controller is currently a stub)
+- `DELETE /api/v1/sessions/current` (authenticated, returns `204`)
 
 ### Users
 
@@ -129,13 +129,14 @@ Get a token from:
 - `GET /api/v1/subscriptions/:id` (owner or admin)
 - `PATCH /api/v1/subscriptions/:id` (owner only in current implementation)
 - `DELETE /api/v1/subscriptions/:id` (owner only in current implementation)
-- `POST /api/v1/subscriptions/:id/reminders` (workflow endpoint, authenticated)
+- `POST /api/v1/subscriptions/:id/reminder-jobs` (owner or admin, creates workflow run)
+- `POST /api/v1/subscriptions/:id/reminder-jobs/run` (internal workflow callback)
 
 ## Notes
 
 - On subscription creation, workflow trigger is attempted only when `QSTASH_TOKEN` is configured.
-- Global error middleware returns errors in `{ success: false, error: "..." }` format.
-- Auth middleware returns `401` with `message` fields for invalid or missing token.
+- Global error middleware returns errors in `{ success: false, error: { code, message } }` format.
+- Create endpoints return `201` with `Location` headers for canonical resource URIs.
 
 ## License
 

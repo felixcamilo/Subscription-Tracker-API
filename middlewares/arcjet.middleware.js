@@ -1,5 +1,12 @@
 import aj from '../config/arcjet.js'
 
+const buildArcjetError = (statusCode, message, errorCode) => {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    error.errorCode = errorCode;
+    return error;
+};
+
 const arcjetMiddleware = async (req, res, next) => {
     try {
 
@@ -7,18 +14,22 @@ const arcjetMiddleware = async (req, res, next) => {
 
         if(decision.isDenied()) {
             if (decision.reason.isRateLimit())
-                return res.status(429).json({error: "Rate limit reached"})
+                return next(buildArcjetError(429, "Rate limit reached", "RATE_LIMITED"))
 
             if(decision.reason.isBot())
-                return res.status(403).json({error: "Bot detected"})
+                return next(buildArcjetError(403, "Bot detected", "BOT_DETECTED"))
 
-            return res.status(403).json({error: "Access denied"})
+            return next(buildArcjetError(403, "Access denied", "ACCESS_DENIED"))
         }
 
         next();
     } catch (error){
         console.log(`Arcjet Middleware Error: ${error}`)
-        next(error);
+        if (!error.statusCode) {
+            const middlewareError = buildArcjetError(500, "Security middleware failure", "ARCJET_ERROR");
+            return next(middlewareError);
+        }
+        return next(error);
     }
 }
 

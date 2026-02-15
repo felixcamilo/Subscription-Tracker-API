@@ -29,14 +29,14 @@ const openApiDocument = {
         type: "object",
         properties: {
           success: { type: "boolean", example: false },
-          error: { type: "string", example: "Validation error" },
-        },
-      },
-      AuthMiddlewareError: {
-        type: "object",
-        properties: {
-          message: { type: "string", example: "Unauthorized" },
-          error: { type: "string", example: "jwt malformed" },
+          error: {
+            type: "object",
+            properties: {
+              code: { type: "string", example: "VALIDATION_ERROR" },
+              message: { type: "string", example: "Validation error" },
+            },
+            required: ["code", "message"],
+          },
         },
       },
       UserCreateRequest: {
@@ -139,7 +139,15 @@ const openApiDocument = {
           content: { "application/json": { schema: { $ref: "#/components/schemas/UserCreateRequest" } } },
         },
         responses: {
-          201: { description: "Created" },
+          201: {
+            description: "Created",
+            headers: {
+              Location: {
+                description: "Canonical URI of the created user resource.",
+                schema: { type: "string", example: "/api/v1/users/507f1f77bcf86cd799439011" },
+              },
+            },
+          },
           400: { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           409: { description: "User already exists", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
@@ -150,7 +158,7 @@ const openApiDocument = {
         security: [{ BearerAuth: [] }],
         responses: {
           200: { description: "OK" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
@@ -163,7 +171,7 @@ const openApiDocument = {
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
         responses: {
           200: { description: "OK" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           404: { description: "Not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
@@ -175,7 +183,7 @@ const openApiDocument = {
         requestBody: { required: true, content: { "application/json": { schema: { type: "object", additionalProperties: true } } } },
         responses: {
           200: { description: "Updated" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           404: { description: "Not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
@@ -189,7 +197,7 @@ const openApiDocument = {
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
         responses: {
           200: { description: "OK" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
@@ -200,7 +208,7 @@ const openApiDocument = {
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
         responses: {
           200: { description: "Deleted" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
@@ -215,7 +223,15 @@ const openApiDocument = {
           content: { "application/json": { schema: { $ref: "#/components/schemas/SessionCreateRequest" } } },
         },
         responses: {
-          200: { description: "Signed in" },
+          201: {
+            description: "Session created",
+            headers: {
+              Location: {
+                description: "Canonical URI of the current session resource.",
+                schema: { type: "string", example: "/api/v1/sessions/current" },
+              },
+            },
+          },
           401: { description: "Invalid password", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           404: { description: "User not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
@@ -225,10 +241,10 @@ const openApiDocument = {
       delete: {
         tags: ["Sessions"],
         summary: "Delete current session (sign out)",
-        security: [],
-        description: "Route exists but current controller implementation is a stub.",
+        security: [{ BearerAuth: [] }],
         responses: {
-          200: { description: "Expected response once implemented" },
+          204: { description: "Session deleted" },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },
@@ -239,7 +255,7 @@ const openApiDocument = {
         security: [{ BearerAuth: [] }],
         responses: {
           200: { description: "OK" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
@@ -252,9 +268,17 @@ const openApiDocument = {
           content: { "application/json": { schema: { $ref: "#/components/schemas/SubscriptionCreateRequest" } } },
         },
         responses: {
-          201: { description: "Created" },
+          201: {
+            description: "Created",
+            headers: {
+              Location: {
+                description: "Canonical URI of the created subscription resource.",
+                schema: { type: "string", example: "/api/v1/subscriptions/507f1f77bcf86cd799439012" },
+              },
+            },
+          },
           400: { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },
@@ -266,7 +290,7 @@ const openApiDocument = {
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
         responses: {
           200: { description: "OK" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           404: { description: "Not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
@@ -282,7 +306,7 @@ const openApiDocument = {
         },
         responses: {
           200: { description: "Updated" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           404: { description: "Not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
@@ -293,37 +317,46 @@ const openApiDocument = {
         security: [{ BearerAuth: [] }],
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
         responses: {
-          200: { description: "Deleted" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
+          204: { description: "Deleted" },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           404: { description: "Not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
       },
     },
-    "/subscriptions/{id}/reminders": {
+    "/subscriptions/{id}/reminder-jobs": {
       post: {
         tags: ["Subscriptions"],
-        summary: "Trigger reminders workflow",
-        description: "Workflow endpoint. Current handler expects `subscriptionId` in payload.",
+        summary: "Create reminder job",
+        description: "Creates a workflow run for a subscription. Uses path id; request body is not required.",
         security: [{ BearerAuth: [] }],
         parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                required: ["subscriptionId"],
-                properties: {
-                  subscriptionId: { type: "string", example: "507f1f77bcf86cd799439012" },
-                },
+        responses: {
+          201: {
+            description: "Reminder job created",
+            headers: {
+              Location: {
+                description: "Canonical URI of the created reminder job resource.",
+                schema: { type: "string", example: "/api/v1/subscriptions/507f1f77bcf86cd799439012/reminder-jobs/wfr_abc123" },
               },
             },
           },
+          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          404: { description: "Not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          503: { description: "Workflow unavailable", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
         },
+      },
+    },
+    "/subscriptions/{id}/reminder-jobs/run": {
+      post: {
+        tags: ["Subscriptions"],
+        summary: "Execute reminder workflow (internal)",
+        description: "Internal Upstash callback endpoint.",
+        security: [],
+        parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
         responses: {
           200: { description: "Accepted/executed by workflow handler" },
-          401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthMiddlewareError" } } } },
         },
       },
     },
@@ -331,3 +364,4 @@ const openApiDocument = {
 };
 
 export default openApiDocument;
+

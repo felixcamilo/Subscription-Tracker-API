@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -30,13 +29,18 @@ export const signIn = async (req, res, next) => {
         }
 
         const token = jwt.sign({userId: user._id}, JWT_SECRET, {expiresIn: JWT_EXPIRES_IN});
+        const userResponse = user.toObject();
+        delete userResponse.password;
 
-        res.status(200).json({
+        res
+            .location("/api/v1/sessions/current")
+            .status(201)
+            .json({
             success: true,
             message: "User signed in successfully",
             data: {
                 token,
-                user
+                user: userResponse
             }
         })
     }
@@ -46,5 +50,9 @@ export const signIn = async (req, res, next) => {
 }
 
 export const signOut = async (req, res, next) => {
-
+    try {
+        return res.status(204).send();
+    } catch (error) {
+        return next(error);
+    }
 }

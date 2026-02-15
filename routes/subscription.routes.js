@@ -2,7 +2,7 @@ import {Router} from "express";
 import authorize from "../middlewares/auth.middleware.js";
 import {
     createSubscription, getAllSubscriptions,
-    updateSubscription, deleteSubscription, getSubscription
+    updateSubscription, deleteSubscription, getSubscription, createReminderJob
 } from "../controllers/subscription.controller.js";
 import {sendReminders} from "../controllers/workflow.controller.js";
 
@@ -18,6 +18,8 @@ subscriptionRouter.patch("/:id", authorize, updateSubscription);
 
 subscriptionRouter.delete("/:id", authorize, deleteSubscription);
 
-subscriptionRouter.post("/:id/reminders", authorize, sendReminders)
+subscriptionRouter.post("/:id/reminder-jobs", authorize, createReminderJob);
+
+subscriptionRouter.post("/:id/reminder-jobs/run", sendReminders);
 
 export default subscriptionRouter;

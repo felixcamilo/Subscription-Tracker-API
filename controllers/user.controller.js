@@ -1,3 +1,7 @@
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import {JWT_EXPIRES_IN, JWT_SECRET} from "../config/env.js";
 import User from "../models/user.model.js";
 import Subscription from "../models/subscription.model.js";
 
@@ -30,18 +34,20 @@ export const signUp = async (req, res, next) => {
         const newUsers = await User.create([{name, email, password: hashedPassword, role}], {session})
 
         const token = jwt.sign({userId: newUsers[0]._id}, JWT_SECRET, {expiresIn: JWT_EXPIRES_IN} );
+        const createdUser = newUsers[0].toObject();
+        delete createdUser.password;
 
         await session.commitTransaction();
 
         await session.endSession();
 
-        res.status(201).json(
+        res.location(`/api/v1/users/${newUsers[0]._id}`).status(201).json(
             {
                  success: true,
                  message: "User signed up successfully",
                  data: {
                     token,
-                    user: newUsers[0],
+                    user: createdUser,
                  }
             }
         );

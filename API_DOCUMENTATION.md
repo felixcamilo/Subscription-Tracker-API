@@ -39,20 +39,11 @@ Typical error (global error middleware):
 ```json
 {
   "success": false,
-  "error": "Error message"
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Error message"
+  }
 }
-```
-
-Auth middleware errors can be:
-
-```json
-{ "message": "Unauthorize" }
-```
-
-or:
-
-```json
-{ "message": "Unauthorized", "error": "jwt malformed" }
 ```
 
 ## Resource Fields
@@ -99,13 +90,14 @@ Notes:
 | GET | `/users/:id/subscriptions` | Yes | Owner or admin |
 | DELETE | `/users/:id/subscriptions` | Yes | Owner or admin |
 | POST | `/sessions` | No | Public |
-| DELETE | `/sessions/current` | No | Public (stub) |
+| DELETE | `/sessions/current` | Yes | Authenticated |
 | GET | `/subscriptions` | Yes | Admin only |
 | POST | `/subscriptions` | Yes | Any authenticated user |
 | GET | `/subscriptions/:id` | Yes | Owner or admin |
 | PATCH | `/subscriptions/:id` | Yes | Owner only |
 | DELETE | `/subscriptions/:id` | Yes | Owner only |
-| POST | `/subscriptions/:id/reminders` | Yes | Authenticated (internal workflow route) |
+| POST | `/subscriptions/:id/reminder-jobs` | Yes | Owner or admin |
+| POST | `/subscriptions/:id/reminder-jobs/run` | No | Internal workflow callback |
 
 ## Endpoints
 
@@ -141,6 +133,8 @@ Success (`201`):
 }
 ```
 
+Response includes `Location: /api/v1/users/:id`.
+
 ### POST `/api/v1/sessions`
 Create a session (login).
 
@@ -153,10 +147,14 @@ Request body:
 }
 ```
 
-Success (`200`): token + user in `data`.
+Success (`201`): token + user in `data`.
+
+Response includes `Location: /api/v1/sessions/current`.
 
 ### DELETE `/api/v1/sessions/current`
-Sign out route exists, but controller is currently a stub (no implemented response body).
+Delete current session (authenticated).
+
+Success: `204 No Content`.
 
 ### GET `/api/v1/users`
 Get all users (admin only).
@@ -223,6 +221,7 @@ Success (`201`) example:
 ```
 
 `workflowRunId` may be `null` when Upstash is not configured.
+Response includes `Location: /api/v1/subscriptions/:id`.
 
 ### GET `/api/v1/subscriptions/:id`
 Get one subscription (owner or admin).
@@ -242,13 +241,34 @@ Request body example:
 ### DELETE `/api/v1/subscriptions/:id`
 Delete subscription (owner only).
 
-### POST `/api/v1/subscriptions/:id/reminders`
-Internal reminder workflow route. The workflow handler reads `subscriptionId` from payload.
+Success: `204 No Content`.
+
+### POST `/api/v1/subscriptions/:id/reminder-jobs`
+Create a reminder job run for a subscription (owner or admin).
+
+Success (`201`) example:
+
+```json
+{
+  "success": true,
+  "data": {
+    "workflowRunId": "wfr_abc123"
+  }
+}
+```
+
+Response includes:
+- `Location: /api/v1/subscriptions/:id/reminder-jobs/:workflowRunId`
+
+### POST `/api/v1/subscriptions/:id/reminder-jobs/run`
+Internal Upstash callback endpoint used to execute the reminder workflow.
+`subscriptionId` is resolved from the URL path (request body is optional).
 
 ## Status Codes Used
 
 - `200` OK
 - `201` Created
+- `204` No Content
 - `400` Validation / bad request
 - `401` Unauthorized
 - `403` Forbidden
@@ -256,6 +276,7 @@ Internal reminder workflow route. The workflow handler reads `subscriptionId` fr
 - `409` Conflict
 - `429` Rate limited (Arcjet)
 - `500` Server error
+- `503` Service unavailable
 
 ## Minimal cURL Flow
 

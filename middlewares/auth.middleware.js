@@ -2,6 +2,13 @@ import jwt from "jsonwebtoken";
 import {JWT_SECRET} from "../config/env.js";
 import User from "../models/user.model.js";
 
+const buildAuthError = (message, errorCode = "UNAUTHORIZED") => {
+    const error = new Error(message);
+    error.statusCode = 401;
+    error.errorCode = errorCode;
+    return error;
+};
+
 const authorize = async (req, res, next) => {
 
     try {
@@ -15,7 +22,7 @@ const authorize = async (req, res, next) => {
         }
 
         if(!token) {
-            return res.status(401).json({message: "Unauthorize"});
+            return next(buildAuthError("Authorization token is required", "AUTH_REQUIRED"));
         }
 
         const decoded = jwt.verify(token, JWT_SECRET);
@@ -23,7 +30,7 @@ const authorize = async (req, res, next) => {
         const user = await User.findById(decoded.userId);
 
         if(!user) {
-            return res.status(401).json({message: "Unauthorize"});
+            return next(buildAuthError("Authentication token is invalid", "INVALID_TOKEN"));
         }
 
         req.user = user;
@@ -31,7 +38,11 @@ const authorize = async (req, res, next) => {
         next();
 
     } catch (error) {
-        res.status(401).json({message: 'Unauthorized', error: error.message});
+        if (error.name === "TokenExpiredError") {
+            return next(buildAuthError("Authentication token has expired", "TOKEN_EXPIRED"));
+        }
+
+        return next(buildAuthError("Authentication token is invalid", "INVALID_TOKEN"));
     }
 }
 
