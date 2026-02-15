@@ -8,6 +8,8 @@ import connectToDatabase from "./database/mongodb.js";
 import cookieParser from "cookie-parser";
 import errorMiddleware from "./middlewares/error.middleware.js";
 import arcjetMiddleware from "./middlewares/arcjet.middleware.js";
+import swaggerUi from "swagger-ui-express";
+import openApiDocument from "./docs/openapi.js";
 
 const app = express();
 
@@ -20,6 +22,8 @@ app.use(arcjetMiddleware)
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/sessions', sessionRouter);
 app.use('/api/v1/subscriptions', subscriptionRouter);
+app.get("/api-docs.json", (req, res) => res.json(openApiDocument));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
 app.use(errorMiddleware)
 

@@ -101,6 +101,8 @@ export const updateSubscription = async (req, res, next) => {
 
         checkSubscriptionOwnership(subscription, req, res)
 
+
+        console.log("Updating subscription with data:", req.body);
         const updatedSubscription = await Subscription.findOneAndUpdate(
             {_id: id} ,
             req.body,
