@@ -1,7 +1,7 @@
 import Subscription from '../models/subscription.model.js'
 import {workflowClient} from "../config/upstash.js";
 import {LOCAL_URL, RENDER_URL} from "../config/env.js";
-import {checkAdminPermission, checkSubscriptionOwnership} from "../validations/validations.js";
+import {checkAdminPermission} from "../permissions/permissions.js";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween.js";
 
@@ -176,15 +176,17 @@ export const getAllSubscriptions = async (req, res, next) => {
 export const deleteAllSubscriptions = async (req, res, next) => {
     try {
 
-        checkAdminPermission(req,  res)
+        const {role} = req.user
+
+        checkAdminPermission(role)
 
         const subscriptions = await Subscription.deleteMany({});
 
         res.status(200).json({success: true, data: subscriptions})
 
 
-    } catch (e) {
-        next(e);
+    } catch (error) {
+        next(error);
     }
 }
 
