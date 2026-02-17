@@ -30,8 +30,8 @@ const subscriptionSchema = new mongoose.Schema({
 
     category: {
         type: String,
-        enum: ['sports', 'news', 'entertainment', 'lifestyle', 'technology', 'finance', 'politics', 'other'],
-        required: [true, 'Subscription Currency is required'],
+        enum: ['sports', 'news', 'entertainment', 'lifestyle', 'technology', 'finance', 'politics', 'education', 'other'],
+        required: [true, 'Subscription Category is required'],
 
     },
 
