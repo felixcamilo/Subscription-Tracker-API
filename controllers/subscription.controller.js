@@ -1,7 +1,7 @@
 import Subscription from '../models/subscription.model.js'
 import {workflowClient} from "../config/upstash.js";
 import {LOCAL_URL, RENDER_URL} from "../config/env.js";
-import {checkAdminPermission} from "../permissions/permissions.js";
+import {checkAdminPermission, checkOwnerPermission} from "../permissions/permissions.js";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween.js";
 
@@ -46,19 +46,21 @@ export const getSubscription = async (req, res, next) => {
 
     try {
 
-        const subscription = await Subscription.findById(req.params.id);
+        const {id} = req.params;
+
+        const subscription = await Subscription.findById(id);
 
         if (!subscription)
             return res.status(404).json({message: "Subscription not found"})
 
+        
+        const subscriptionUserId = subscription.user._id.toString()
 
-        if (subscription.user._id.toString() === req.user.id || req.user.role === 'admin'){
+        const {id: currentUserId} = req.user
+  
+        checkOwnerPermission(subscriptionUserId, currentUserId)
 
-            res.status(200).json({success: true, data: subscription})
-        }
-        else{
-            res.status(403).json({message: "You do not have permission to perform this action"})
-        }
+        res.status(200).json({success: true, data: subscription})
 
 
     } catch (error) {
@@ -67,22 +69,54 @@ export const getSubscription = async (req, res, next) => {
 }
 
 
+export const getAllSubscriptions = async (req, res, next) => {
+   try {
+
+       const {role} = req.user
+
+       checkAdminPermission(role)
+
+       const subscriptions = await Subscription.find();
+
+       res.status(200).json({success: true, data: subscriptions})
+
+   } catch (error){
+       next(error);
+   }
+}
+
+
+
 export const updateSubscription = async (req, res, next) => {
 
     try {
 
-        const subscription = await Subscription.findById(req.params.id)
+        const {id} = req.params;
+        const subscription = await Subscription.findById(id)
 
         if (!subscription){
-            res.status(404).json({message: "Subscription not found"})
+            return res.status(404).json({message: "Subscription not found"})
         }
 
-        checkSubscriptionOwnership(subscription, req, res)
+        const subscriptionUserId = subscription.user._id.toString()
+
+        const {id: currentUserId} = req.user
+  
+        checkOwnerPermission(subscriptionUserId, currentUserId)
+
+        const blockedFields = new Set(["_id", "user", "createdAt", "updatedAt", "__v"]);
+        const updateFields = Object.fromEntries(
+            Object.entries(req.body).filter(([key, value]) => !blockedFields.has(key) && value !== undefined)
+        );
+
+        if (Object.keys(updateFields).length === 0) {
+            return res.status(400).json({message: "No valid fields to update"})
+        }
 
         const updatedSubscription = await Subscription.findByIdAndUpdate(
-            req.params.id,
-            {...req.body},
-            {new: true})
+            id,
+            {$set: updateFields},
+            {new: true, runValidators: true})
 
         res.status(200).json({success: true, message: "has been updated succesfully!", data: updatedSubscription})
 
@@ -96,15 +130,20 @@ export const deleteSubscription = async (req, res, next) => {
 
     try {
 
-        const subscription = await Subscription.findById(req.params.id)
+        const subscriptionId = req.params.id
+
+        const subscription = await Subscription.findById(subscriptionId)
 
         if (!subscription){
-          return  res.status(404).json({message: "Subscription not found"})
+          return  res.status(404).json({success: false, message: "Subscription not found"})
         }
 
-        checkSubscriptionOwnership(subscription, req, res)
+        const subscriptionUserId = subscription.user._id.toString()
+        const {id} = req.user
 
-        const response = await Subscription.findByIdAndDelete(req.params.id)
+        checkOwnerPermission(subscriptionUserId, id)
+
+        const response = await Subscription.findByIdAndDelete(subscriptionId)
 
         res.status(200).json({success: true, message: "has been deleted succesfully!", data: response})
     }  catch (error){
@@ -112,83 +151,6 @@ export const deleteSubscription = async (req, res, next) => {
     }
 }
 
-
-export const getUserAllSubscriptions = async (req, res, next) => {
-
-    try {
-
-        if (req.user.role === "admin" || req.user.id === req.params.id) {
-            const subscriptions = await Subscription.find({user: req.params.id})
-
-            res.status(200).json({success: true, data: subscriptions})
-        }
-        else {
-
-            res.status(403).json({message: "Just the admin and the owner account have permission to perform this action"});
-
-        }
-
-
-    } catch (error){
-        next(error);
-    }
-}
-
-
-export const deleteUserAllSubscriptions = async (req, res, next) => {
-
-    try {
-
-        if (req.user.role === "admin" || req.user.id === req.params.id) {
-
-            const response = await Subscription.deleteMany({user: req.params.id})
-
-            res.status(200).json({success: true, data: response})
-        }
-        else{
-
-            res.status(403).json({message: "Just the admin and the owner account have permission to perform this action"});
-
-        }
-
-
-    } catch (error) {
-        next(error);
-    }
-}
-
-
-export const getAllSubscriptions = async (req, res, next) => {
-   try {
-
-       checkAdminPermission(req, res)
-
-       const subscriptions = await Subscription.find();
-
-       res.status(200).json({success: true, data: subscriptions})
-
-   } catch (error){
-       next(error);
-   }
-}
-
-
-export const deleteAllSubscriptions = async (req, res, next) => {
-    try {
-
-        const {role} = req.user
-
-        checkAdminPermission(role)
-
-        const subscriptions = await Subscription.deleteMany({});
-
-        res.status(200).json({success: true, data: subscriptions})
-
-
-    } catch (error) {
-        next(error);
-    }
-}
 
 
 
