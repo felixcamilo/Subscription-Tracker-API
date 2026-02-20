@@ -1,5 +1,5 @@
-import {createRequire} from 'module'
 import Subscription from "../models/subscription.model.js";
+import {createRequire} from 'module'
 const require = createRequire(import.meta.url);
 const {serve} = require("@upstash/workflow/express")
 
@@ -56,7 +56,7 @@ const fetchSubscription = async (context, subscriptionId) => {
 
 const sleepUntilReminder = async (context, label, date) => {
 
-    console.log(`Sleeping until ${label} reminder at ${date}`);
+    console.log(`Sleeping until ${label}, the next reminder will be at ${date}`);
 
     await context.sleepUntil(label, date.toDate());
 }

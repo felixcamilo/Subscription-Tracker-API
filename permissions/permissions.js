@@ -5,3 +5,11 @@ export const checkAdminPermission = (role) => {
         throw new Error("Only the admin has permission to perform this action");
     }
 }
+
+
+export const checkOwnerPermission = (subscriptionUserId, currentUserId) => {
+
+    if (subscriptionUserId !== currentUserId) {
+        throw new Error("Only the subscription owner have permission to perform this action");
+    }
+}
