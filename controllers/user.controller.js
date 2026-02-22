@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import Subscription from "../models/subscription.model.js";
-import { checkAdminPermission } from "../permissions/permissions.js";
+import { checkAdminOrOwnerPermission, checkAdminPermission } from "../permissions/permissions.js";
 
 export const getUsers = async (req, res, next) => {
 
@@ -25,6 +25,11 @@ export const getUser = async (req, res, next) => {
 
     try {
 
+        const {role, id: currentUserId} = req.user;
+        const {id: paramsId} = req.params;
+
+        checkAdminOrOwnerPermission(role, currentUserId, paramsId);
+
         const user = await User.findById(req.params.id).select("-password");
 
         if(!user){
@@ -46,12 +51,13 @@ export const updateUser = async (req, res, next) => {
 
     try {
 
-        if (req.user.id !== req.params.id && req.user.role !== 'admin') {
-            return res.status(403).json({message: "Unauthorized"});
-        }
+        const {role, id: currentUserId} = req.user;
+        const {id: paramsId} = req.params;
+
+        checkAdminOrOwnerPermission(role, currentUserId, paramsId);
 
         const userUpdated = await User.findByIdAndUpdate(
-            req.params.id,
+            paramsId,
             {...req.body},
             {new: true})
 
@@ -74,13 +80,12 @@ export const deleteUser = async (req, res, next) => {
     try {
 
         
-        const {role} = req.user;
+        const {role, id: currentUserId} = req.user;
+        const {id: paramsId} = req.params;
 
-        checkAdminPermission(role);
+        checkAdminOrOwnerPermission(role, currentUserId, paramsId);
 
-        const {id} = req.params;
-
-        const deletedUser = await User.findByIdAndDelete(id);
+        const deletedUser = await User.findByIdAndDelete(paramsId);
 
         if (!deletedUser) {
             const error = new Error("Unable to delete. User not found");
@@ -100,18 +105,19 @@ export const getUserAllSubscriptions = async (req, res, next) => {
     try {
 
         const {role: currentUserRole, id: currentUserId} = req.user;
+        const {id: paramsId} = req.params;
 
-        if (currentUserRole === "admin" || currentUserId === req.params.id) {
-            const subscriptions = await Subscription.find({user: req.params.id})
+        checkAdminOrOwnerPermission(currentUserRole, currentUserId, paramsId);
+
+        const subscriptions = await Subscription.find({user: paramsId})
+
+        if(!subscriptions){
+            const error = new Error("No subscriptions found for the user id you passed in");
+            error.statusCode = 404;
+            throw error;
+        }
 
             res.status(200).json({success: true, data: subscriptions})
-        }
-        else {
-
-            res.status(403).json({success: false, 
-                message: "Only the admin and the Subscriptions Owner have permission to perform this action"});
-
-        }
 
 
     } catch (error){
@@ -125,20 +131,20 @@ export const deleteUserAllSubscriptions = async (req, res, next) => {
     try {
 
         const {role: currentUserRole, id: currentUserId} = req.user;
+        const {id: paramsId} = req.params;
 
-        if (currentUserRole === "admin" || currentUserId === req.params.id) {
+        checkAdminOrOwnerPermission(currentUserRole, currentUserId, paramsId);
 
-            const response = await Subscription.deleteMany({user: req.params.id})
+        const response = await Subscription.deleteMany({user: paramsId})
 
-            res.status(200).json({success: true, message: "All subscriptions deleted successfully", data: response})
-        }
-        else{
-
-            res.status(403).json({success: false, 
-                message: "Only the admin and the Subscriptions Owner have permission to perform this action"});
-
+        if(response.deletedCount === 0){
+            const error = new Error("No subscriptions found for the user id you passed in");
+            error.statusCode = 404;
+            throw error;
         }
 
+        res.status(200).json({success: true, message: "All subscriptions deleted successfully", data: response})
+        
 
     } catch (error) {
         next(error);

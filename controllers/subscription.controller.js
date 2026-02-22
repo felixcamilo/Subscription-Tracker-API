@@ -42,12 +42,34 @@ export const createSubscription = async (req, res, next) => {
 }
 
 
+export const getAllSubscriptions = async (req, res, next) => {
+   try {
+
+       const {role} = req.user
+
+       checkAdminPermission(role)
+
+       const subscriptions = await Subscription.find();
+
+       if(!subscriptions){
+           return res.status(404).json({message: "There are no subscriptions in the database"})
+       }
+
+       res.status(200).json({success: true, data: subscriptions})
+
+   } catch (error){
+       next(error);
+   }
+}
+
+
+
 export const getSubscription = async (req, res, next) => {
 
     try {
 
         const {id} = req.params;
-
+        
         const subscription = await Subscription.findById(id);
 
         if (!subscription)
@@ -66,23 +88,6 @@ export const getSubscription = async (req, res, next) => {
     } catch (error) {
         next(error)
     }
-}
-
-
-export const getAllSubscriptions = async (req, res, next) => {
-   try {
-
-       const {role} = req.user
-
-       checkAdminPermission(role)
-
-       const subscriptions = await Subscription.find();
-
-       res.status(200).json({success: true, data: subscriptions})
-
-   } catch (error){
-       next(error);
-   }
 }
 
 
@@ -152,7 +157,25 @@ export const deleteSubscription = async (req, res, next) => {
 }
 
 
+export const getUpcomingRenewals = async (req, res, next) => {
+    try {
 
+        const today = dayjs();
+        const in7Days = dayjs().add(7, 'day');
+
+        const subscriptions = await Subscription.find({
+            user: req.user._id,
+            renewalDate: {
+                $gte: today.toDate(),
+                $lte: in7Days.toDate()
+            }
+        });
+
+        res.status(200).json({success: true, data: subscriptions });
+    } catch (error) {
+        next(error);
+    }
+}
 
 
 

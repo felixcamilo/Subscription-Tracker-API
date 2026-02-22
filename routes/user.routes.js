@@ -7,11 +7,11 @@ const userRouter = Router();
 
 userRouter.get("/",authorize, getUsers)
 
-userRouter.get("/:id",authorize, getUser)
+userRouter.get("/current/:id",authorize, getUser)
 
-userRouter.put("/:id", authorize, updateUser)
+userRouter.put("/current/:id", authorize, updateUser)
 
-userRouter.delete("/:id", authorize, deleteUser)
+userRouter.delete("/current/:id", authorize, deleteUser)
 
 userRouter.get("/:id/subscriptions", authorize, getUserAllSubscriptions)
 
