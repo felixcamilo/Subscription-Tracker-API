@@ -4,6 +4,8 @@ import userRouter from "./routes/user.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import subscriptionRouter from "./routes/subscription.routes.js";
 import workflowRouter from "./routes/workflow.routes.js";
+import swaggerUi from "swagger-ui-express";
+import openApiSpec from "./docs/openapi.js";
 
 import connectToDatabase from "./database/mongodb.js";
 import cookieParser from "cookie-parser";
@@ -15,6 +17,10 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser())
+app.get("/api-docs.json", (req, res) => {
+    res.status(200).json(openApiSpec);
+});
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec, {explorer: true}));
 app.use(arcjetMiddleware)
 
 app.use('/api/v1/users', userRouter);
